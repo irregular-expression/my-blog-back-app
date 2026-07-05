@@ -20,6 +20,8 @@
     <jackson.version>2.17.0</jackson.version>
     <lombok.version>1.18.32</lombok.version>
     <mapstruct.version>1.5.5.Final</mapstruct.version>
+    <junit.version>6.1.0</junit.version>
+    <hamcrest.version>3.0</hamcrest.version>
   </properties>
 
   <dependencies>
@@ -42,11 +44,46 @@
           <version>${spring.version}</version>
           <scope>test</scope>
       </dependency>
+
+      <dependency>
+          <groupId>org.junit.jupiter</groupId>
+          <artifactId>junit-jupiter</artifactId>
+          <version>${junit.version}</version>
+          <scope>test</scope>
+      </dependency>
+
+      <dependency>
+          <groupId>org.mockito</groupId>
+          <artifactId>mockito-junit-jupiter</artifactId>
+          <version>5.23.0</version>
+          <scope>test</scope>
+      </dependency>
+
+      <dependency>
+          <groupId>org.junit.platform</groupId>
+          <artifactId>junit-platform-launcher</artifactId>
+          <version>${junit.version}</version>
+          <scope>test</scope>
+      </dependency>
+
+      <dependency>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>hamcrest</artifactId>
+          <version>${hamcrest.version}</version>
+          <scope>test</scope>
+      </dependency>
+
+      <dependency>
+          <groupId>com.jayway.jsonpath</groupId>
+          <artifactId>json-path</artifactId>
+          <version>2.2.0</version>
+          <scope>test</scope>
+      </dependency>
     <!-- Servlet API -->
     <dependency>
        <groupId>jakarta.servlet</groupId>
        <artifactId>jakarta.servlet-api</artifactId>
-       <version>4.0.2</version>
+       <version>6.0.0</version>
        <scope>provided</scope>
     </dependency>
 
@@ -70,13 +107,7 @@
       <dependency>
           <groupId>org.postgresql</groupId>
           <artifactId>postgresql</artifactId>
-          <version>42.7.2</version>
-          <scope>runtime</scope>
-      </dependency>
-      <dependency>
-          <groupId>com.h2database</groupId>
-          <artifactId>h2</artifactId>
-          <version>2.2.224</version>
+          <version>42.7.3</version>
       </dependency>
 
       <dependency>
@@ -94,7 +125,7 @@
   </dependencies>
 
   <build>
-    <finalName>spring-web-demo</finalName>
+    <finalName>api</finalName>
     <pluginManagement>
         <plugins>
             <plugin>
