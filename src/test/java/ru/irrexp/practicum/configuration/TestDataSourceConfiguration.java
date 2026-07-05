@@ -8,15 +8,21 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.sql.DataSource;
 
-@Profile("!test")
+@Profile("test")
 @Configuration
 @EnableTransactionManagement
-public class DataSourceConfiguration extends BaseJdbcConfiguration {
+public class TestDataSourceConfiguration extends BaseJdbcConfiguration {
 
     @Bean
     public DataSource dataSource(
@@ -32,16 +38,6 @@ public class DataSourceConfiguration extends BaseJdbcConfiguration {
         dataSource.setCurrentSchema(schema);
 
         return dataSource;
-    }
-
-    @EventListener
-    public void populate(ContextRefreshedEvent event) {
-
-        DataSource dataSource = event.getApplicationContext().getBean(DataSource.class);
-
-        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
-        populator.addScript(new ClassPathResource("sql/schema.sql")); // Файл должен находиться в ресурсах
-        populator.execute(dataSource);
     }
 
 }
