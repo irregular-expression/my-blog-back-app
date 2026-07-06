@@ -38,21 +38,7 @@ public class PostsResultSetExtractor implements ResultSetExtractor<PostsPageDto>
 
             Integer postId = rs.getInt("id");
 
-            PostDto post = postMap.computeIfAbsent(postId, id -> {
-                var builder = PostDto.builder();
-                try {
-                    builder.id(id)
-                           .title(rs.getString("title"))
-                           .text(rs.getString("content"))
-                           .commentsCount(rs.getInt("commentscount"))
-                           .likesCount(rs.getInt("likescount"))
-                           .tags(new HashSet<>());
-
-                } catch (SQLException e) {
-                    throw new ServerException(e.getLocalizedMessage());
-                }
-                return builder.build();
-            });
+            PostDto post = postMap.computeIfAbsent(postId, id -> fillPostDto(rs, id));
 
             String tag = rs.getString("tag");
             if (!rs.wasNull()) {
@@ -63,5 +49,21 @@ public class PostsResultSetExtractor implements ResultSetExtractor<PostsPageDto>
         return pageBuilder
                 .posts(postMap.values().stream().toList())
                 .build();
+    }
+
+    private PostDto fillPostDto(ResultSet rs, Integer id) {
+        var builder = PostDto.builder();
+        try {
+            builder.id(id)
+                    .title(rs.getString("title"))
+                    .text(rs.getString("content"))
+                    .commentsCount(rs.getInt("commentscount"))
+                    .likesCount(rs.getInt("likescount"))
+                    .tags(new HashSet<>());
+
+        } catch (SQLException e) {
+            throw new ServerException(e.getLocalizedMessage());
+        }
+        return builder.build();
     }
 }

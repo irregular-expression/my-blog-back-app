@@ -34,14 +34,4 @@ public class DataSourceConfiguration extends BaseJdbcConfiguration {
         return dataSource;
     }
 
-    @EventListener
-    public void populate(ContextRefreshedEvent event) {
-
-        DataSource dataSource = event.getApplicationContext().getBean(DataSource.class);
-
-        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
-        populator.addScript(new ClassPathResource("sql/schema.sql")); // Файл должен находиться в ресурсах
-        populator.execute(dataSource);
-    }
-
 }

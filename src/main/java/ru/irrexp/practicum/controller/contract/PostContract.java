@@ -21,7 +21,7 @@ public interface PostContract {
                              @RequestParam("pageNumber") Integer pageNumber,
                              @RequestParam("pageSize") Integer pageSize);
 
-    @PostMapping("/post/{postId}")
+    @GetMapping("/post/{postId}")
     ResponseEntity<PostDto> getPost(@PathVariable("postId") Integer postId);
 
     @PostMapping("/posts")

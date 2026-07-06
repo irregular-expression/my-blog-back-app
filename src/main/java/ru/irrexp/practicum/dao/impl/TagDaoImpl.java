@@ -37,17 +37,17 @@ public class TagDaoImpl implements TagDao {
     public void deleteTags(Integer postId, Set<String> expiredTags) {
         String sql = FileLoaderUtil.loadStringFromClasspath("sql/queries/post/delete-tags.sql");
 
+        StringBuilder builder = new StringBuilder(sql);
+
         MapSqlParameterSource expiredTagsParams = new MapSqlParameterSource()
                 .addValue("postId", postId);
 
         if (!isEmpty(expiredTags)) {
             expiredTagsParams.addValue("tags", expiredTags);
-            sql = String.format(sql, " AND tag IN (:tags)");
-        } else {
-            sql = String.format(sql, "");
+            builder.append(" AND tag IN (:tags)");
         }
 
-        namedParameterJdbcTemplate.update(sql, expiredTagsParams);
+        namedParameterJdbcTemplate.update(builder.toString(), expiredTagsParams);
 
     }
 

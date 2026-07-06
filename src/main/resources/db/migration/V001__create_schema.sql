@@ -1,9 +1,8 @@
 begin;
 
-create schema if not exists blog;
 set local search_path to blog;
 
-create table if not exists posts(
+create table posts(
        id SERIAL PRIMARY KEY,
        title VARCHAR,
        content TEXT,
@@ -14,7 +13,7 @@ create table if not exists posts(
        is_deleted BOOLEAN DEFAULT FALSE
 );
 
-create table if not exists comments (
+create table comments (
        id SERIAL PRIMARY KEY,
        content TEXT,
        post_id INTEGER,
@@ -24,14 +23,14 @@ create table if not exists comments (
        FOREIGN KEY (post_id) REFERENCES posts(id)
 );
 
-create table if not exists tags (
+create table tags (
        post_id INTEGER NOT NULL,
        tag VARCHAR NOT NULL,
        PRIMARY KEY (post_id, tag),
        FOREIGN KEY (post_id) REFERENCES posts(id)
 );
 
-create table if not exists images (
+create table images (
     id SERIAL PRIMARY KEY,
     post_id INTEGER,
     content BYTEA NOT NULL,

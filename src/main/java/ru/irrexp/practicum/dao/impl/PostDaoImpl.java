@@ -107,22 +107,26 @@ public class PostDaoImpl implements PostDao {
     public PostsPageDto search(String titleSubstring, Set<String> tags, Integer pageNumber, Integer pageSize) {
         String sql = FileLoaderUtil.loadStringFromClasspath("sql/queries/post/search-posts-template.sql");
 
+        StringBuilder builder = new StringBuilder(sql);
+
         MapSqlParameterSource namedParameters = new MapSqlParameterSource()
                 .addValue("pageOffset", (pageNumber - 1) * pageSize)
                 .addValue("pageSize", pageSize);
 
-        StringBuilder searchPart = new StringBuilder();
         if (isNotBlank(titleSubstring)) {
             namedParameters.addValue("titlePart", titleSubstring);
-            searchPart.append(" AND p.title LIKE '%' || :titlePart || '%' \n");
+            builder.append(" AND p.title LIKE '%' || :titlePart || '%' \n");
         }
         if (!tags.isEmpty()) {
             namedParameters.addValue("tags", tags);
-            searchPart.append(" AND t.tag IN (:tags) ");
+            builder.append(" AND t.tag IN (:tags) ");
         }
-        sql = String.format(sql, searchPart);
+        builder.append("""
+            ORDER BY p.id, t.tag
+            LIMIT :pageSize OFFSET :pageOffset
+        """);
 
-        return namedParameterJdbcTemplate.query(sql, namedParameters, new PostsResultSetExtractor());
+        return namedParameterJdbcTemplate.query(builder.toString(), namedParameters, new PostsResultSetExtractor());
     }
 
     @Override

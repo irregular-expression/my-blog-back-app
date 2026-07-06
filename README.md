@@ -8,3 +8,5 @@
 Вместо env/.env подкладываем путь до своего файла с настройками БД вида:
 `POSTGRES_USER=user
 POSTGRES_PASSWORD=password`
+
+Накат БД `mvn flyway:migrate`

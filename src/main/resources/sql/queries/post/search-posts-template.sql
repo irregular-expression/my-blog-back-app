@@ -9,6 +9,4 @@ SELECT p.id as id,
        :pageOffset as pageOffset
 FROM posts p
 LEFT JOIN tags t ON t.post_id = p.id
-WHERE p.is_deleted = FALSE%s
-ORDER BY p.id, t.tag
-LIMIT :pageSize OFFSET :pageOffset
+WHERE p.is_deleted = FALSE

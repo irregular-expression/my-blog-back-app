@@ -115,7 +115,7 @@ class ApiControllerIntegrationTest {
 
     @Test
     void shouldGetPost() throws Exception {
-        mockMvc.perform(post("/post/{id}", 1))
+        mockMvc.perform(get("/post/{id}", 1))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath(".title").value("Привет мир!"));
@@ -136,7 +136,7 @@ class ApiControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        mockMvc.perform(post("/post/{id}", 1))
+        mockMvc.perform(get("/post/{id}", 1))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath(".title").value("Суслик"));

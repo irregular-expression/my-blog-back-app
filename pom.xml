@@ -22,6 +22,7 @@
     <mapstruct.version>1.5.5.Final</mapstruct.version>
     <junit.version>6.1.0</junit.version>
     <hamcrest.version>3.0</hamcrest.version>
+    <flyway.version>12.10.0</flyway.version>
   </properties>
 
   <dependencies>
@@ -109,6 +110,11 @@
           <artifactId>postgresql</artifactId>
           <version>42.7.3</version>
       </dependency>
+      <dependency>
+          <groupId>org.flywaydb</groupId>
+          <artifactId>flyway-database-postgresql</artifactId>
+          <version>${flyway.version}</version>
+      </dependency>
 
       <dependency>
           <groupId>org.projectlombok</groupId>
@@ -128,6 +134,18 @@
     <finalName>api</finalName>
     <pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>${flyway.version}</version>
+                <configuration>
+                    <url>jdbc:postgresql://localhost:5433/postgres</url>
+                    <user>practicum_user</user>
+                    <password>mysecretpassword</password>
+                    <schemas>blog</schemas>
+                    <locations>classpath:db/migration</locations>
+                </configuration>
+            </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>

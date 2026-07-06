@@ -1,2 +1,2 @@
 DELETE FROM tags
-WHERE post_id = :postId%s
+WHERE post_id = :postId
