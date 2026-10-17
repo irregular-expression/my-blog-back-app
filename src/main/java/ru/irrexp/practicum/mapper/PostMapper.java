@@ -12,6 +12,10 @@ import ru.irrexp.practicum.model.Post;
 public interface PostMapper {
 
     PostDto toDto(Post post);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "commentsCount", ignore = true)
+    @Mapping(target = "likesCount", ignore = true)
     Post toEntity(CreatePostRq createPostRq);
 
     @Mapping(target = "likesCount", ignore = true)
