@@ -45,14 +45,14 @@ class ApiControllerIntegrationTest {
 
     @BeforeEach
     void setup() throws SQLException {
-
-        jdbcTemplate.update("INSERT INTO posts (id, title, content, comments_count) VALUES (?, ?, ?, ?)",
-                            POST_ID, "Привет мир!", "Content", 1);
+        jdbcTemplate.execute("TRUNCATE TABLE posts RESTART IDENTITY CASCADE");
+        jdbcTemplate.update("INSERT INTO posts (title, content, comments_count) VALUES (?, ?, ?)",
+                            "Привет мир!", "Content", 1);
         jdbcTemplate.update("INSERT INTO tags (post_id, tag) VALUES (?, ?)",
                 POST_ID, "#мир");
         jdbcTemplate.update(
-                "INSERT INTO comments (id, post_id, content) VALUES (?, ?, ?)",
-                COMMENT_ID, POST_ID, "Тестовый комментарий"
+                "INSERT INTO comments (post_id, content) VALUES (?, ?)",
+                POST_ID, "Тестовый комментарий"
         );
 
     }

@@ -1,49 +1,133 @@
 package ru.irrexp.practicum.service;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import ru.irrexp.practicum.dao.PostDao;
+import ru.irrexp.practicum.dto.PostDto;
 import ru.irrexp.practicum.dto.PostsPageDto;
-import ru.irrexp.practicum.mapper.PostMapper;
-import ru.irrexp.practicum.service.impl.PostServiceImpl;
 
-import java.util.Set;
+import java.util.HashSet;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-public class PostServiceTest {
+@SpringBootTest
+@ActiveProfiles("test")
+class PostServiceTest {
 
-    @InjectMocks
-    private PostServiceImpl postService;
+    @Autowired
+    private PostService postService;
 
-    @Mock
-    private PostDao postDao;
+    @MockitoBean
+    public PostDao postDao;
 
-    @Mock
-    private PostMapper postMapper;
+    private static final Integer PAGE_NUMBER = 1;
+    private static final Integer PAGE_SIZE = 10;
 
 
     @Test
-    void shouldDoSearchLogic() {
+    void search_mixedQuery_titleAndTagsExtractedCorrectly() {
+        String query = "java статья #spring #boot";
 
-        PostsPageDto dto = PostsPageDto.builder()
+        PostsPageDto expectedResult = PostsPageDto.builder()
+                .posts(List.of(PostDto.builder().build()))
                 .build();
 
-        doReturn(dto).when(postDao).search(eq("Привет мир!"), eq(Set.of("#мир")), eq(1), eq(1));
+        when(postDao.search(eq("java статья"), anySet(), anyInt(), anyInt()))
+                .thenReturn(expectedResult);
 
-        var result = postService.search("Привет мир! #мир", 1, 1);
+        PostsPageDto result = postService.search(query, PAGE_NUMBER, PAGE_SIZE);
 
-        verify(postDao, times(1)).search(eq("Привет мир!"), eq(Set.of("#мир")), eq(1), eq(1));
-        assertEquals(dto, result);
+        assertEquals(expectedResult, result);
 
+        verify(postDao, times(1)).search(
+                eq("java статья"),
+                argThat(tags -> tags.contains("#spring") && tags.contains("#boot")),
+                eq(PAGE_NUMBER),
+                eq(PAGE_SIZE)
+        );
     }
 
+    @Test
+    void search_onlyHashtags_titleEmpty_tagsCollected() {
+        String query = "#java #spring";
+
+        PostsPageDto expectedResult = PostsPageDto.builder()
+                .posts(List.of(PostDto.builder().build()))
+                .hasPrev(false)
+                .hasNext(false)
+                .build();
+
+        when(postDao.search(eq(""), anySet(), anyInt(), anyInt()))
+                .thenReturn(expectedResult);
+
+        PostsPageDto result = postService.search(query, PAGE_NUMBER, PAGE_SIZE);
+
+        assertEquals(expectedResult, result);
+
+        verify(postDao, times(1)).search(
+                eq(""),
+                argThat(tags -> tags.contains("#java") && tags.contains("#spring")),
+                eq(PAGE_NUMBER),
+                eq(PAGE_SIZE)
+        );
+    }
+
+    @Test
+    void search_noHashtags_allWordsGoToTitle() {
+        String query = "новая статья про Java";
+
+        PostsPageDto expectedResult = PostsPageDto.builder()
+                .posts(List.of(PostDto.builder()
+                                       .title(query)
+                                       .text(query)
+                                       .build()))
+                .hasNext(false)
+                .hasPrev(false)
+                .build();
+        when(postDao.search(eq("новая статья про Java"), eq(new HashSet<>()), anyInt(), anyInt()))
+                .thenReturn(expectedResult);
+
+        PostsPageDto result = postService.search(query, PAGE_NUMBER, PAGE_SIZE);
+
+        assertEquals(expectedResult, result);
+
+        verify(postDao, times(1)).search(
+                eq("новая статья про Java"),
+                eq(new HashSet<>()),
+                eq(PAGE_NUMBER),
+                eq(PAGE_SIZE)
+        );
+    }
+
+    @Test
+    void search_emptyQuery_titleEmpty_noTags() {
+        String query = "";
+
+        PostsPageDto expectedResult = PostsPageDto.builder()
+                .hasNext(false)
+                .hasPrev(false)
+                .lastPage(0)
+                .build();
+        when(postDao.search(eq(""), eq(new HashSet<>()), anyInt(), anyInt()))
+                .thenReturn(expectedResult);
+
+        PostsPageDto result = postService.search(query, PAGE_NUMBER, PAGE_SIZE);
+
+        assertEquals(expectedResult, result);
+
+        verify(postDao, times(1)).search(
+                eq(""),
+                eq(new HashSet<>()),
+                eq(PAGE_NUMBER),
+                eq(PAGE_SIZE)
+        );
+    }
 }

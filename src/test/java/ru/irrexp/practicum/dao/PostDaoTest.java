@@ -155,9 +155,9 @@ class PostDaoTest {
         Integer postId = 5;
         jdbcTemplate.update("INSERT INTO posts (id, title, content, likes_count, comments_count) VALUES (?, ?, ?, ?, ?)",
                             postId, "Пост с тегами", "Текст", 0, 0);
-        tagDao.addNewTags(postId, Set.of("java"));
+        tagDao.addNewTags(postId, Set.of("#java"));
 
-        PostsPageDto result = postDao.search(null, Set.of("java"), 1, 10);
+        PostsPageDto result = postDao.search(null, Set.of("#java"), 1, 10);
         assertEquals(1, result.lastPage());
         assertEquals(1, result.posts().size());
     }

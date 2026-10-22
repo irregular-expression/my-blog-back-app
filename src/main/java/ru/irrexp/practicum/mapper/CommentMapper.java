@@ -17,7 +17,17 @@ public interface CommentMapper {
     @Mapping(target = "id", ignore = true)
     Comment toEntity(CreateCommentRq createCommentRq);
 
-    @Mapping(target = "content", source = "text")
-    Comment toEntity(@MappingTarget Comment c, CommentDto dto);
+    default Comment toEntity(@MappingTarget Comment c, CommentDto dto) {
+        if (dto.id() != null) {
+            c.setId(dto.id());
+        }
+        if (dto.postId() != null) {
+            c.setPostId(dto.postId());
+        }
+        if (dto.text() != null) {
+            c.setContent(dto.text());
+        }
+        return c;
+    }
 
 }
