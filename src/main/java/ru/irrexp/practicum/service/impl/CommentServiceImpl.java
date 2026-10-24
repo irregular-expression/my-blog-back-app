@@ -40,6 +40,9 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     public CommentDto create(Integer postId, CreateCommentRq createCommentRq) {
         Comment comment = mapper.toEntity(createCommentRq);
+        if (comment.getPostId() == null) {
+            comment.setPostId(postId);
+        }
         dao.save(comment);
         return mapper.toDto(comment);
     }

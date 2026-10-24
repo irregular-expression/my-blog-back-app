@@ -1,6 +1,7 @@
 package ru.irrexp.practicum.dao.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -70,7 +71,11 @@ public class ImageDaoImpl implements ImageDao {
                 .addValue("postId", postId);
 
         String sql = FileLoaderUtil.loadStringFromClasspath("sql/queries/image/get-image.sql");
-        return Optional.ofNullable(template.queryForObject(sql, namedParameters, (rs, rowNum) -> rs.getBytes("content")));
+        try {
+            return Optional.ofNullable(template.queryForObject(sql, namedParameters, (rs, rowNum) -> rs.getBytes("content")));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 
 }

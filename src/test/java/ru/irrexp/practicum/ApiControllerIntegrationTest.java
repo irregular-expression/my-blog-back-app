@@ -5,75 +5,61 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
-import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
-import ru.irrexp.practicum.configuration.DataSourceConfiguration;
+import org.springframework.transaction.annotation.Transactional;
 import ru.irrexp.practicum.dto.CommentDto;
 import ru.irrexp.practicum.dto.CreateCommentRq;
 import ru.irrexp.practicum.dto.CreatePostRq;
 import ru.irrexp.practicum.dto.UpdatePostRq;
 import ru.irrexp.practicum.util.FileLoaderUtil;
 
+import java.sql.SQLException;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
-@SpringJUnitConfig(classes = {
-        DataSourceConfiguration.class,
-        WebConfiguration.class,
-})
-@WebAppConfiguration
-@TestPropertySource(locations = "classpath:application-test.properties")
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Transactional
 class ApiControllerIntegrationTest {
 
     @Autowired
-    private WebApplicationContext wac;
-    @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
     private MockMvc mockMvc;
 
     private final ObjectMapper mapper = new ObjectMapper();
 
+    private static final Integer POST_ID = 1;
+    private static final Integer COMMENT_ID = 1;
 
     @BeforeEach
-    void setup() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
-
-        // Чистим и наполняем БД перед каждым тестом
-        jdbcTemplate.execute(FileLoaderUtil.loadStringFromClasspath("sql/schema.sql"));
-
-        jdbcTemplate.execute("""
-                    INSERT INTO posts (title, content)
-                    VALUES ('Привет мир!', 'Тестовый пост')
-                """);
-
-        jdbcTemplate.execute("""
-                    INSERT INTO tags (post_id, tag)
-                    VALUES (1, '#мир')
-                """);
-
-        jdbcTemplate.execute("""
-                    INSERT INTO comments (post_id, content)
-                    VALUES (1, 'Какой-то комментарий')
-                """);
+    void setup() throws SQLException {
+        jdbcTemplate.execute("TRUNCATE TABLE posts RESTART IDENTITY CASCADE");
+        jdbcTemplate.update("INSERT INTO posts (title, content, comments_count) VALUES (?, ?, ?)",
+                            "Привет мир!", "Content", 1);
+        jdbcTemplate.update("INSERT INTO tags (post_id, tag) VALUES (?, ?)",
+                POST_ID, "#мир");
+        jdbcTemplate.update(
+                "INSERT INTO comments (post_id, content) VALUES (?, ?)",
+                POST_ID, "Тестовый комментарий"
+        );
 
     }
 
     @AfterEach
-    void clean() {
-        jdbcTemplate.execute("""
-                    drop schema if exists blogtest cascade;
-                """);
+    void tearDown() {
+        jdbcTemplate.execute("TRUNCATE TABLE posts RESTART IDENTITY CASCADE");
     }
 
     @Test
@@ -144,16 +130,16 @@ class ApiControllerIntegrationTest {
 
     @Test
     void shouldSearchPage() throws Exception {
-        for (int i = 1; i <= 50; i++) {
+        for (int i = 2; i <= 50; i++) {
             jdbcTemplate.execute("""
-                    INSERT INTO posts (title, content)
-                    VALUES ('Привет мир! - %d', 'Тестовый пост')
-                """.formatted(i));
+                    INSERT INTO posts (id, title, content)
+                    VALUES (%d, 'Привет мир! - %d', 'Тестовый пост')
+                """.formatted(i, i));
 
             jdbcTemplate.execute("""
                     INSERT INTO tags (post_id, tag)
                     VALUES (%d, '#мир')
-                """.formatted(i + 1));
+                """.formatted(i));
         }
 
 
@@ -165,7 +151,7 @@ class ApiControllerIntegrationTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath(".hasPrev").value(Boolean.FALSE))
                 .andExpect(jsonPath(".hasNext").value(Boolean.TRUE))
-                .andExpect(jsonPath(".lastPage").value(51));
+                .andExpect(jsonPath(".lastPage").value(50));
 
     }
 
@@ -180,7 +166,7 @@ class ApiControllerIntegrationTest {
         mockMvc.perform(get("/posts/{id}/comments", 1))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].text").value("Какой-то комментарий"));
+                .andExpect(jsonPath("$[0].text").value("Тестовый комментарий"));
 
     }
 
@@ -189,7 +175,7 @@ class ApiControllerIntegrationTest {
         mockMvc.perform(get("/posts/{postId}/comments/{commentId}", 1, 1))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath(".text").value("Какой-то комментарий"));
+                .andExpect(jsonPath(".text").value("Тестовый комментарий"));
 
     }
 

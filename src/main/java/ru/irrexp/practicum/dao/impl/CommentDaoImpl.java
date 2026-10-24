@@ -1,6 +1,7 @@
 package ru.irrexp.practicum.dao.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -38,7 +39,11 @@ public class CommentDaoImpl implements CommentDao {
                 .addValue("commentId", commentId);
         String sql = FileLoaderUtil.loadStringFromClasspath("sql/queries/comment/find-comment.sql");
 
-        return Optional.ofNullable(template.queryForObject(sql, namedParameters, BeanPropertyRowMapper.newInstance(Comment.class)));
+        try {
+            return Optional.ofNullable(template.queryForObject(sql, namedParameters, BeanPropertyRowMapper.newInstance(Comment.class)));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 
     @Override

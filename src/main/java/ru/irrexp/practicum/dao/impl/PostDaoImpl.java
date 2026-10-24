@@ -2,7 +2,6 @@ package ru.irrexp.practicum.dao.impl;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -10,6 +9,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import ru.irrexp.practicum.dao.PostDao;
 import ru.irrexp.practicum.dao.TagDao;
 import ru.irrexp.practicum.dto.PostsPageDto;
@@ -17,6 +17,7 @@ import ru.irrexp.practicum.model.Post;
 import ru.irrexp.practicum.util.FileLoaderUtil;
 import ru.irrexp.practicum.dao.impl.extractors.PostsResultSetExtractor;
 import ru.irrexp.practicum.dao.impl.extractors.SinglePostResultSetExtractor;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Optional;
 import java.util.Set;
@@ -30,6 +31,8 @@ public class PostDaoImpl implements PostDao {
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final TagDao tagDao;
+
+    private final JsonMapper.Builder builder;
 
     @Override
     public Optional<Post> find(Integer postId) {
@@ -105,9 +108,10 @@ public class PostDaoImpl implements PostDao {
 
     @Override
     public PostsPageDto search(String titleSubstring, Set<String> tags, Integer pageNumber, Integer pageSize) {
-        String sql = FileLoaderUtil.loadStringFromClasspath("sql/queries/post/search-posts-template.sql");
+        String sqlStart = FileLoaderUtil.loadStringFromClasspath("sql/queries/post/search-posts-template-start.sql");
+        String sqlEnd = FileLoaderUtil.loadStringFromClasspath("sql/queries/post/search-posts-template-end.sql");
 
-        StringBuilder builder = new StringBuilder(sql);
+        StringBuilder builder = new StringBuilder(sqlStart);
 
         MapSqlParameterSource namedParameters = new MapSqlParameterSource()
                 .addValue("pageOffset", (pageNumber - 1) * pageSize)
@@ -115,16 +119,23 @@ public class PostDaoImpl implements PostDao {
 
         if (isNotBlank(titleSubstring)) {
             namedParameters.addValue("titlePart", titleSubstring);
-            builder.append(" AND p.title LIKE '%' || :titlePart || '%' \n");
+            builder.append("""
+            \n      AND (:titlePart IS NULL OR p.title ILIKE '%' || :titlePart || '%')
+            """);
         }
-        if (!tags.isEmpty()) {
-            namedParameters.addValue("tags", tags);
-            builder.append(" AND t.tag IN (:tags) ");
+
+        if (!CollectionUtils.isEmpty(tags)) {
+            namedParameters.addValue("tags", tags.stream().toList());
+            builder.append("""
+            \n      AND EXISTS (
+                      SELECT 1
+                      FROM blogtest.tags t2
+                      WHERE t2.post_id = p.id
+                      AND t2.tag IN (:tags)
+                  )
+            """);
         }
-        builder.append("""
-            ORDER BY p.id, t.tag
-            LIMIT :pageSize OFFSET :pageOffset
-        """);
+        builder.append(sqlEnd);
 
         return namedParameterJdbcTemplate.query(builder.toString(), namedParameters, new PostsResultSetExtractor());
     }

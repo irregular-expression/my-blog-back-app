@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class PostsResultSetExtractor implements ResultSetExtractor<PostsPageDto> {
@@ -28,7 +29,7 @@ public class PostsResultSetExtractor implements ResultSetExtractor<PostsPageDto>
 
                 int lastPage = (postsCount + pageSize - 1) / pageSize;
                 boolean hasPrev = pageOffset > 0;
-                boolean hasNext = (pageSize + pageOffset) <= postsCount;
+                boolean hasNext = (pageSize + pageOffset) < postsCount;
 
                 pageBuilder.lastPage(lastPage)
                      .hasNext(hasNext)
@@ -46,9 +47,18 @@ public class PostsResultSetExtractor implements ResultSetExtractor<PostsPageDto>
             }
         }
 
-        return pageBuilder
-                .posts(postMap.values().stream().toList())
-                .build();
+        if (initialized) {
+            return pageBuilder
+                    .posts(postMap.values().stream().toList())
+                    .build();
+        } else {
+            return pageBuilder
+                    .lastPage(0)
+                    .hasNext(false)
+                    .hasPrev(false)
+                    .posts(List.of())
+                    .build();
+        }
     }
 
     private PostDto fillPostDto(ResultSet rs, Integer id) {

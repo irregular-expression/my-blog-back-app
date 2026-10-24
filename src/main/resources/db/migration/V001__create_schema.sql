@@ -1,7 +1,5 @@
 begin;
 
-set local search_path to blog;
-
 create table posts(
        id SERIAL PRIMARY KEY,
        title VARCHAR,
